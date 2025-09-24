@@ -1,1 +1,1 @@
-If you run the the main method, you will find that a git folder has been created along with an objects sub folder. Inside the git folder will be 2 files: 
+If you run the the main method, it will run my milestone21 method. This method first ensures that the git repo does not already exist. Next, it will create a git repository, and an objects subfolder, then create the 2 files in seperate helper methods. I had to figure out how to deal with the exists function and found some helpful information through research which is attached at the method "createObjectsDirectory."
