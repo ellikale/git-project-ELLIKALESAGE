@@ -1,0 +1,1 @@
+If you run the the main method, you will find that a git folder has been created along with an objects sub folder. Inside the git folder will be 2 files: 
