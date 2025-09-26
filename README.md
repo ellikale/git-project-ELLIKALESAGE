@@ -1,0 +1,3 @@
+If you run the the main method, it will run my milestone21 method. This method first ensures that the git repo does not already exist by checking all paths. Next, it will create a git repository, and an objects subfolder, then create the 2 files in seperate helper methods. I had to figure out how to deal with the exists function and found some helpful information through research which is attached at the method "createObjectsDirectory."
+
+My tester ensures that all the git repository initialization is working. I ran it 5 times for maximum robustness and printed the number of the test and when it was created vs erased/deleted. I also made sure that everything is named something that is understandable. I considered edge cases where each directory or file already existed.
