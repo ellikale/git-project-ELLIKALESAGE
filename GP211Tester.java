@@ -1,13 +1,16 @@
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public class GP211Tester {
     public static void main(String[] args) throws IOException {
-        for (int i = 0; i < 6; i++) {
-            System.out.println("Test " + i + ": ");
-            repoInitializationTester();
-            cleanUpTime();
-        }
+        // for (int i = 0; i < 6; i++) {
+        //     System.out.println("Test " + i + ": ");
+        //     repoInitializationTester();
+        //     cleanUpTime();
+        // }
+        originalTestHash();
     }
 
     public static void repoInitializationTester() throws IOException{
@@ -52,6 +55,30 @@ public class GP211Tester {
                 }
             }
             file.delete();
+        }
+    }
+
+    //returned the same hash, passed for a normal file
+    public static void originalTestHash(){
+        try{  
+            File tempFile = File.createTempFile("tempSpecial", ".txt");
+            String specialString = "hi!";
+            Files.write(tempFile.toPath(), specialString.getBytes(StandardCharsets.UTF_8));
+            String hash = Git.hashFile(tempFile.getAbsolutePath());
+            String expectedHash = "3a987acf8cbc1028b7dbc86bd086831151899a2b";
+            System.out.println("Regular File Test");
+            System.out.println("Expected: " + expectedHash);
+            System.out.println("Actual: " + hash);
+            if(hash.equalsIgnoreCase(expectedHash)){
+                System.out.println("Passed!"); 
+            }
+            else{
+                System.out.println("Failed!"); 
+            }
+            tempFile.delete();
+        }
+        catch (IOException e) {
+            System.err.println("something happened..." + e.getMessage());
         }
     }
 }
