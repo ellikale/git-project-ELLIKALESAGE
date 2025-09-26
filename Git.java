@@ -1,6 +1,11 @@
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class Git{
     public static void main(String[] args) throws IOException {
@@ -53,4 +58,37 @@ public class Git{
             headFile.createNewFile();
         }
     }
+
+    public static String hashFile(String filePath){    
+        try (BufferedInputStream bufferedInputStream = new BufferedInputStream(new FileInputStream(filePath))){
+            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while((bytesRead = bufferedInputStream.read(buffer)) != -1){
+                digest.update(buffer, 0, bytesRead);
+            }
+            byte[] hashBytes = digest.digest();
+            return makeItHex(hashBytes);
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("SHA-1 is unavailable right now.");
+        }catch (FileNotFoundException e) {
+            System.err.println("That file does not exist");
+        }catch (IOException e) {
+            System.err.println("Cannot read the file!");
+        }
+        return null;
+    }
+
+    public static String makeItHex(byte[] hashers){
+        //used stackoverflow for help
+        char[] hexArrayFormat = "0123456789ABCDEF".toCharArray();
+        char[] hexskis = new char[hashers.length *2];
+        for(int j = 0; j < hashers.length; j++){
+            int i = hashers[j] & 0xFF;
+            hexskis[j * 2] = hexArrayFormat[i >>> 4];
+            hexskis[j * 2 + 1] = hexArrayFormat[i & 0x0F];
+        }
+        return new String(hexskis);
+    }
+
 }
