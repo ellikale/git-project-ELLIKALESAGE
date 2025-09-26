@@ -5,6 +5,7 @@ import java.nio.file.Files;
 
 public class GP211Tester {
     public static void main(String[] args) throws IOException {
+        Git.milestone21();
         // for (int i = 0; i < 6; i++) {
         //     System.out.println("Test " + i + ": ");
         //     repoInitializationTester();
