@@ -2,16 +2,24 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GP211Tester {
     public static void main(String[] args) throws IOException {
-        Git.milestone21();
+        //Git.milestone21();
         // for (int i = 0; i < 6; i++) {
         //     System.out.println("Test " + i + ": ");
         //     repoInitializationTester();
         //     cleanUpTime();
         // }
-        originalTestHash();
+        //originalTestHash();
+        for (int i = 0; i < 6; i++) {
+            System.out.println("Test " + i + ": ");
+            blobTester();
+            cleanUpTime();
+            cleanUpTimeForBlob();
+        }
     }
 
     public static void repoInitializationTester() throws IOException{
@@ -45,6 +53,11 @@ public class GP211Tester {
 
     public static void cleanUpTime(){
         deleteRecursively(new File("git"));
+        System.out.println("All cleaned up buttercup!");
+    }
+
+    public static void cleanUpTimeForBlob(){
+        deleteRecursively(new File("samples"));
         System.out.println("All cleaned up buttercup!");
     }
 
@@ -82,4 +95,48 @@ public class GP211Tester {
             System.err.println("something happened..." + e.getMessage());
         }
     }
+
+    private static List<File> createSampleFiles() throws IOException {
+        File samplesDir = new File("samples");
+        if (!samplesDir.exists()) {
+            samplesDir.mkdir();
+        }
+        List<File> files = new ArrayList<>();
+        String[] contents = {"my name is bob", "testers are my fav part of cs", "bababooey", "abcedfg hi jk lmao"};
+        for (int i = 0; i < contents.length; i++) {
+            File file = new File(samplesDir, "sampleFile" + i + ".txt");
+            Files.write(file.toPath(), contents[i].getBytes());
+            files.add(file);
+        }
+        return files;
+    }
+
+    public static void blobTester() throws IOException {
+    Git.milestone21();
+    List<File> sampleFiles = createSampleFiles();
+    boolean allPassed = true;
+    for (File file : sampleFiles) {
+        byte[] originalContent = Files.readAllBytes(file.toPath());
+        String expectedHash = Git.hashFile(file.getAbsolutePath());
+        Git.createBlobFiles(file.getAbsolutePath());
+        File blobFile = new File("git/objects", expectedHash);
+        if (!blobFile.exists()) {
+            System.out.println("The blob file " + file.getName() + "is missing");
+            allPassed = false;
+		break;
+        }
+        byte[] blobContent = Files.readAllBytes(blobFile.toPath());
+        if (!java.util.Arrays.equals(originalContent, blobContent)) {
+            System.out.println("Content inside mismatches for " + file.getName());
+            allPassed = false;
+        } else {
+            System.out.println("Successful!");
+        }
+    }
+    if (allPassed) {
+        System.out.println("CONGRATS");
+    } else {
+        System.out.println("FAILED");
+    }
+}
 }
