@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -90,5 +91,14 @@ public class Git{
         }
         return new String(hexskis);
     }
+
+    public static void createBlobFiles(String filePath) throws IOException{
+	byte[] fileBytes = Files.readAllBytes(Paths.get(filePath));
+	String hash = hashFile(filePath);
+	File blobFile = new File("git/objects", hash);
+        if (!blobFile.exists()) {
+            Files.write(blobFile.toPath(), fileBytes);
+        }
+}
 
 }
