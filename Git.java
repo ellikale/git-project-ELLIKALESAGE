@@ -18,7 +18,7 @@ public class Git{
     public static void originalCheck(){
         File indexFile = new File("git", "index");
         File headFile = new File("git", "HEAD");
-        File git = new File("git/objects");
+        File git = new File("git");
         File objects = new File("git/objects");
         if(indexFile.exists() && headFile.exists() && git.exists() && objects.exists()){
             System.out.println("Git Repository Already Exists");
