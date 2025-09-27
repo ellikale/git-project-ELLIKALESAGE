@@ -1,12 +1,15 @@
 import java.io.BufferedInputStream;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 public class Git{
     public static void main(String[] args) throws IOException {
@@ -100,5 +103,21 @@ public class Git{
             Files.write(blobFile.toPath(), fileBytes);
         }
 }
+
+    public static void updateIndex(String hashString, String fileName) throws IOException{
+        File indexFile = new File("git", "index");
+        List<String> lines = Files.readAllLines(indexFile.toPath());
+        String toAdd = hashString + " " + fileName;
+        lines.add(toAdd);
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(indexFile))){
+            for (int i = 0; i < lines.size(); i++) {
+                bw.write(lines.get(i));
+                if(i < lines.size() - 1){
+                    bw.newLine();
+                }
+            }
+        }
+    }
+    
 
 }

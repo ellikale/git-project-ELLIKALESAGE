@@ -30,7 +30,7 @@ public class GP211Tester {
         File git = new File("git");
         File objects = new File("git/objects");
 
-        if(!indexFile.exists()){
+        if(!indexFile.exists()){ 
             System.out.println("You did not successfully create the repo, namely the indexFile");
             ifSuccessful = false;
         }
