@@ -23,6 +23,8 @@ public class GP211Tester {
         // indexingTester();
         // cleanUpTime();
         // cleanUpTimeForBlob();
+        indexingTester();
+        robustReset();
     }
 
     public static void repoInitializationTester() throws IOException{
@@ -166,5 +168,30 @@ public class GP211Tester {
     } else {
         System.out.println("FAILED");
     }
+    }
+
+    public static void robustReset(){
+        try{
+            File objectsDir = new File("git/objects");
+            if(objectsDir.exists() && objectsDir.isDirectory()){
+                for (File random : objectsDir.listFiles()) {
+                    if(random.isFile()){
+                        random.delete();
+                    }
+                }
+            }
+            File indexFile = new File("git", "index");
+            if(indexFile.exists()){
+                Files.write(indexFile.toPath(), new byte[0]);
+            }
+            File samplesDir = new File("samples");
+            if(samplesDir.exists()){
+                deleteRecursively(samplesDir);
+            }
+            System.out.println("SUCCCCCESS");
+        }
+        catch (Exception e){
+            System.out.println("Uh oh... look what happened: " + e.getMessage());
+        }
     }
 }
