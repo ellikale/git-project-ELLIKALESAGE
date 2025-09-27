@@ -14,12 +14,15 @@ public class GP211Tester {
         //     cleanUpTime();
         // }
         //originalTestHash();
-        for (int i = 0; i < 6; i++) {
-            System.out.println("Test " + i + ": ");
-            blobTester();
-            cleanUpTime();
-            cleanUpTimeForBlob();
-        }
+        // for (int i = 0; i < 6; i++) {
+        //     System.out.println("Test " + i + ": ");
+        //     blobTester();
+        //     cleanUpTime();
+        //     cleanUpTimeForBlob();
+        // }
+        // indexingTester();
+        // cleanUpTime();
+        // cleanUpTimeForBlob();
     }
 
     public static void repoInitializationTester() throws IOException{
@@ -139,4 +142,29 @@ public class GP211Tester {
         System.out.println("FAILED");
     }
 }
+
+    public static void indexingTester() throws IOException{
+        Git.milestone21();
+        List<File> sampleFiles = createSampleFiles();
+        boolean allPassed = true;
+        for (File file : sampleFiles) {
+            String hash = Git.hashFile(file.getAbsolutePath());
+            Git.createBlobFiles(file.getAbsolutePath());
+            Git.updateIndex(hash, file.getName());
+        }
+
+        List<String> indexStrings = Files.readAllLines(new File("git/index").toPath());
+        for (File file : sampleFiles) {
+            String expectedHash = Git.hashFile(file.getAbsolutePath());
+            String letshopeSo = expectedHash + " " + file.getName();
+            if(!indexStrings.contains(letshopeSo)){
+                allPassed = false;
+            }
+        }
+        if (allPassed) {
+        System.out.println("CONGRATS");
+    } else {
+        System.out.println("FAILED");
+    }
+    }
 }
