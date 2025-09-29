@@ -14,12 +14,17 @@ public class GP211Tester {
         //     cleanUpTime();
         // }
         //originalTestHash();
-        for (int i = 0; i < 6; i++) {
-            System.out.println("Test " + i + ": ");
-            blobTester();
-            cleanUpTime();
-            cleanUpTimeForBlob();
-        }
+        // for (int i = 0; i < 6; i++) {
+        //     System.out.println("Test " + i + ": ");
+        //     blobTester();
+        //     cleanUpTime();
+        //     cleanUpTimeForBlob();
+        // }
+        // indexingTester();
+        // cleanUpTime();
+        // cleanUpTimeForBlob();
+        indexingTester();
+        robustReset();
     }
 
     public static void repoInitializationTester() throws IOException{
@@ -30,7 +35,7 @@ public class GP211Tester {
         File git = new File("git");
         File objects = new File("git/objects");
 
-        if(!indexFile.exists()){
+        if(!indexFile.exists()){ 
             System.out.println("You did not successfully create the repo, namely the indexFile");
             ifSuccessful = false;
         }
@@ -139,4 +144,54 @@ public class GP211Tester {
         System.out.println("FAILED");
     }
 }
+
+    public static void indexingTester() throws IOException{
+        Git.milestone21();
+        List<File> sampleFiles = createSampleFiles();
+        boolean allPassed = true;
+        for (File file : sampleFiles) {
+            String hash = Git.hashFile(file.getAbsolutePath());
+            Git.createBlobFiles(file.getAbsolutePath());
+            Git.updateIndex(hash, file.getName());
+        }
+
+        List<String> indexStrings = Files.readAllLines(new File("git/index").toPath());
+        for (File file : sampleFiles) {
+            String expectedHash = Git.hashFile(file.getAbsolutePath());
+            String letshopeSo = expectedHash + " " + file.getName();
+            if(!indexStrings.contains(letshopeSo)){
+                allPassed = false;
+            }
+        }
+        if (allPassed) {
+        System.out.println("CONGRATS");
+    } else {
+        System.out.println("FAILED");
+    }
+    }
+
+    public static void robustReset(){
+        try{
+            File objectsDir = new File("git/objects");
+            if(objectsDir.exists() && objectsDir.isDirectory()){
+                for (File random : objectsDir.listFiles()) {
+                    if(random.isFile()){
+                        random.delete();
+                    }
+                }
+            }
+            File indexFile = new File("git", "index");
+            if(indexFile.exists()){
+                Files.write(indexFile.toPath(), new byte[0]);
+            }
+            File samplesDir = new File("samples");
+            if(samplesDir.exists()){
+                deleteRecursively(samplesDir);
+            }
+            System.out.println("SUCCCCCESS");
+        }
+        catch (Exception e){
+            System.out.println("Uh oh... look what happened: " + e.getMessage());
+        }
+    }
 }
