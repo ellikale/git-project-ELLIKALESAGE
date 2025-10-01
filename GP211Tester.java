@@ -2,6 +2,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +26,7 @@ public class GP211Tester {
         // cleanUpTime();
         // cleanUpTimeForBlob();
         indexingTester();
+        testingModification();
         robustReset();
     }
 
@@ -152,22 +155,27 @@ public class GP211Tester {
         for (File file : sampleFiles) {
             String hash = Git.hashFile(file.getAbsolutePath());
             Git.createBlobFiles(file.getAbsolutePath());
-            Git.updateIndex(hash, file.getName());
+            Git.updateIndex(hash, file.getAbsolutePath());
         }
 
         List<String> indexStrings = Files.readAllLines(new File("git/index").toPath());
         for (File file : sampleFiles) {
+
+            Path relativeRootDirPath = Paths.get(System.getProperty("user.dir")).toAbsolutePath(); // used stackoverlow to get pwd in java
+            Path filePath = file.toPath().toAbsolutePath();
+            String relativePath = relativeRootDirPath.relativize(filePath).toString(); //used baeldung for relativize
+
             String expectedHash = Git.hashFile(file.getAbsolutePath());
-            String letshopeSo = expectedHash + " " + file.getName();
+            String letshopeSo = expectedHash + " " + relativePath;
             if(!indexStrings.contains(letshopeSo)){
                 allPassed = false;
             }
         }
         if (allPassed) {
         System.out.println("CONGRATS");
-    } else {
-        System.out.println("FAILED");
-    }
+        } else {
+            System.out.println("FAILED");
+        }
     }
 
     public static void robustReset(){
@@ -193,5 +201,26 @@ public class GP211Tester {
         catch (Exception e){
             System.out.println("Uh oh... look what happened: " + e.getMessage());
         }
+    }
+
+    public static void testingModification() throws IOException{
+        File modFile = new File("samples/sampleFile1.txt");
+        Files.write(modFile.toPath(), "hi im new content!".getBytes(StandardCharsets.UTF_8));
+        String hash = Git.hashFile(modFile.getAbsolutePath());
+        Git.createBlobFiles(modFile.getAbsolutePath());
+        Git.updateIndex(hash, modFile.getAbsolutePath());
+        boolean bababooey = false;
+        List<String> indexStrings = Files.readAllLines(new File("git/index").toPath());
+        for (String string : indexStrings) {
+            if(string.equals(hash + " " + "samples/sampleFile1.txt")){
+                bababooey = true;
+                break;
+            }
+        }
+        if (bababooey) {
+        System.out.println("modification is turnt!");
+    } else {
+        System.out.println("modification is not working");
+    }
     }
 }

@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -106,9 +107,27 @@ public class Git{
 
     public static void updateIndex(String hashString, String fileName) throws IOException{
         File indexFile = new File("git", "index");
+        Path relativeRootDirPath = Paths.get(System.getProperty("user.dir")).toAbsolutePath(); // used stackoverlow to get pwd in java
+        Path filePath = Paths.get(fileName).toAbsolutePath();
+        String relativePath = relativeRootDirPath.relativize(filePath).toString(); //used baeldung for relativize
+        
         List<String> lines = Files.readAllLines(indexFile.toPath());
-        String toAdd = hashString + " " + fileName;
-        lines.add(toAdd);
+        String toAdd = hashString + " " + relativePath;
+        
+        boolean haveYouUpdated = false;
+        for (int i = 0; i < lines.size(); i++) {
+            String theLine = lines.get(i);
+            if(theLine.endsWith(" " + relativePath)){
+                if(!theLine.startsWith(hashString + " ")){
+                    lines.set(i, toAdd);
+                }
+                haveYouUpdated = true;
+                break;
+            }
+        }
+        if(!haveYouUpdated){
+            lines.add(toAdd);
+        }
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(indexFile))){
             for (int i = 0; i < lines.size(); i++) {
                 bw.write(lines.get(i));
