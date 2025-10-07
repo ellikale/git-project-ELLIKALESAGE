@@ -154,14 +154,14 @@ public class Git{
                     createBlobFiles(file.getAbsolutePath());
                     String blobHash = hashFile(file.getAbsolutePath());
                     Path relativeRootDirPath = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
-                    Path filePath = Paths.get(file.getName()).toAbsolutePath();
+                    Path filePath = file.toPath().toAbsolutePath();
                     String relativePath = relativeRootDirPath.relativize(filePath).toString();
                     treeList.add("blob " + blobHash + " " + relativePath);
                 }
                 if(file.isDirectory()){
                     String subdirHash = treeify(file.getAbsolutePath());
                     Path relativeRootDirPath = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
-                    Path filePath = Paths.get(file.getName()).toAbsolutePath();
+                    Path filePath = file.toPath().toAbsolutePath();
                     String relativePath = relativeRootDirPath.relativize(filePath).toString();
 
                     treeList.add("tree " + subdirHash + " " + relativePath);
@@ -179,10 +179,144 @@ public class Git{
 
             File treeFile = new File("git/objects", treeHash);
             if(!treeFile.exists()){
-                Files.write(treeFile.toPath(), treeHash.getBytes());
+                Files.write(treeFile.toPath(), everything.getBytes());
             }
             return treeHash;
         }
 
+    public static void parseNormalize() throws IOException{
+        File index = new File("git", "index");
+        File workingList = new File("git", "workingList");
+        List<String> indexLines = Files.readAllLines(index.toPath());
+        List<String> workingLines = new ArrayList<>();
+        for (String string : indexLines) {
+            workingLines.add("blob " + string);
+        }
+        Files.write(workingList.toPath(), workingLines);
+    }
 
+    public static void sortWL() throws IOException{
+        File workingList = new File("git", "workingList");
+        List<String> workLines = Files.readAllLines(workingList.toPath());
+        boolean didYouSwap = true;
+        while(didYouSwap){
+            didYouSwap = false;
+            for (int i = 0; i < workLines.size() - 1; i++) {
+                String firstLine = workLines.get(i);
+                String secondLine = workLines.get(i + 1);
+                String firstPath = getPathFromWLLine(firstLine);
+                String secoPath = getPathFromWLLine(secondLine);
+                if(firstPath.compareTo(secoPath) > 0){
+                    workLines.set(i, secondLine);
+                    workLines.set(i + 1, firstLine);
+                    didYouSwap = true;
+
+                }
+            }
+        }
+        Files.write(workingList.toPath(), workLines);
+    }
+
+    public static String getPathFromWLLine(String line){
+        if(line.length() > 46){
+            return line.substring(46);
+        }
+        return line;
+    }
+
+    public static String findLeafMostParentDir(List<String> lines){
+        String deepest = null;
+        int maxDepth = -1;
+        for (String string : lines) {
+            String path = getPathFromWLLine(string);
+            int depth = 0;
+            for (int i = 0; i < path.length(); i++) {
+                if(path.charAt(i) == '/'){
+                    depth ++;
+                }
+            }
+            if(depth > maxDepth && path.contains("/")){
+                maxDepth = depth;
+                deepest = path.substring(0, path.lastIndexOf("/")); // used w3 schools
+            }
+        }
+        return deepest;
+    }
+
+    public static void workToTree() throws Exception{
+        parseNormalize();
+        File workingListFile = new File("git", "workingList");
+        if(!workingListFile.exists()){
+            throw new Exception("brochacho, there is no working list file");
+        }
+        List<String> lines = Files.readAllLines(workingListFile.toPath());
+
+        sortWL();
+        while(true){
+            String leafDir = findLeafMostParentDir(lines);
+            if(leafDir == null){
+                break;
+            }
+
+            List<String> children = new ArrayList<>();
+            for (String line : lines) {
+                String path = getPathFromWLLine(line);
+                if(path.startsWith(leafDir + "/")){
+                    String relative = path.substring(leafDir.length() + 1);
+                    if(!relative.contains("/")){
+                        children.add(line);
+                    }
+                }
+            }
+
+            String treeContents = "";
+            for (String string : children) {
+                String[] parts = string.split(" ");
+                String type = parts[0];
+                String hash = parts[1];
+                String path = parts[2];
+                String name = path.substring(path.lastIndexOf("/") + 1);
+                treeContents = treeContents + type + " " + hash + " " + name + "\n";
+            }
+
+            File tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod = File.createTempFile("tree", ".txt");
+            Files.write(tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod.toPath(), treeContents.getBytes());
+
+
+            String treeHash = hashFile(tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod.getAbsolutePath());
+            tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod.delete();
+
+            File treeFile = new File("git/objects", treeHash);
+            if(!treeFile.exists()){
+                Files.write(treeFile.toPath(), treeContents.getBytes());
+            }
+
+            List<String> updatedLines = new ArrayList<>();
+            for (String line : lines) {
+                String path = getPathFromWLLine(line);
+                if(!path.equals(leafDir) && !path.startsWith(leafDir + "/")){
+                    updatedLines.add(line);
+                }
+            }
+            updatedLines.add("tree " + treeHash + " " + leafDir);
+            lines = updatedLines;
+            Files.write(workingListFile.toPath(), lines);
+            sortWL();
+        }
+    }
+
+    // public static void workToTree(){
+    //     parseNormalize();
+    //     File workingListFile = new File("git", "workingList");
+    //     if(!workingListFile.exists()){
+    //         throw new Exception("brochacho, there is no working list file");
+    //     }
+    //     List<String> lines = Files.readAllLines(workingListFile.toPath());\
+    //     sortWL();
+    //     String rootHash = buildRecursiveTree("", lines);
+    // }
+
+    // public static String buildRecursiveTree(String path, List<String> lines){
+
+    // }
 }
