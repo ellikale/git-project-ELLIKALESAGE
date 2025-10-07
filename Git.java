@@ -271,7 +271,7 @@ public class Git{
 
             String treeContents = "";
             for (String string : children) {
-                String[] parts = string.split(" ");
+                String[] parts = string.split(" "); 
                 String type = parts[0];
                 String hash = parts[1];
                 String path = parts[2];
