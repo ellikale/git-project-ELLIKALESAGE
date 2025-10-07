@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Git{
@@ -137,6 +138,51 @@ public class Git{
             }
         }
     }
-    
+
+    public static String treeify(String path) throws Exception{
+            File dir = new File(path);
+            if(!dir.exists()){
+                throw new Exception("broski that is not a real path...");
+            }
+            List<String> treeList = new ArrayList<>();
+            File[] everythingList = dir.listFiles();
+            if(everythingList == null){
+                everythingList = new File[0];
+            }
+            for (File file : everythingList) {
+                if(file.isFile()){
+                    createBlobFiles(file.getAbsolutePath());
+                    String blobHash = hashFile(file.getAbsolutePath());
+                    Path relativeRootDirPath = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
+                    Path filePath = Paths.get(file.getName()).toAbsolutePath();
+                    String relativePath = relativeRootDirPath.relativize(filePath).toString();
+                    treeList.add("blob " + blobHash + " " + relativePath);
+                }
+                if(file.isDirectory()){
+                    String subdirHash = treeify(file.getAbsolutePath());
+                    Path relativeRootDirPath = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
+                    Path filePath = Paths.get(file.getName()).toAbsolutePath();
+                    String relativePath = relativeRootDirPath.relativize(filePath).toString();
+
+                    treeList.add("tree " + subdirHash + " " + relativePath);
+                }
+            }
+
+            String everything = String.join("\n", treeList); // stack overflow
+
+            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            byte[] bytes = everything.getBytes();
+            byte[] hashBytes = digest.digest(bytes);
+            String treeHash = makeItHex(hashBytes);
+
+            // do i need to save this tree someplace?
+
+            File treeFile = new File("git/objects", treeHash);
+            if(!treeFile.exists()){
+                Files.write(treeFile.toPath(), treeHash.getBytes());
+            }
+            return treeHash;
+        }
+
 
 }
