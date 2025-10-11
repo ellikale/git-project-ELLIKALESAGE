@@ -7,8 +7,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GP211Tester {
-    public static void main(String[] args) throws IOException {
+public class GPTester {
+    public static void main(String[] args) throws Exception {
+        testTreeIterativeWL();
+        //need to commit again for gitkraken to chill
+        //createSampleFilesNested();
         //Git.milestone21();
         // for (int i = 0; i < 6; i++) {
         //     System.out.println("Test " + i + ": ");
@@ -25,9 +28,12 @@ public class GP211Tester {
         // indexingTester();
         // cleanUpTime();
         // cleanUpTimeForBlob();
-        indexingTester();
-        testingModification();
-        robustReset();
+        // indexingTester();
+        // testingModification();
+        //createSampleFiles();
+        //createSampleFiles();
+        //testingModification();
+        //robustReset();
     }
 
     public static void repoInitializationTester() throws IOException{
@@ -104,7 +110,7 @@ public class GP211Tester {
         }
     }
 
-    private static List<File> createSampleFiles() throws IOException {
+    public static List<File> createSampleFiles() throws IOException {
         File samplesDir = new File("samples");
         if (!samplesDir.exists()) {
             samplesDir.mkdir();
@@ -116,6 +122,29 @@ public class GP211Tester {
             Files.write(file.toPath(), contents[i].getBytes());
             files.add(file);
         }
+        return files;
+    }
+
+    public static List<File> createSampleFilesNested() throws IOException {
+        File samplesDir = new File("Samples");
+        if (!samplesDir.exists()) {
+            samplesDir.mkdir();
+        }
+        List<File> files = new ArrayList<>();
+        String[] mainFileNames = {"hello", "test"};
+        String[] mainContents = {"HELLOO PRISCILLAA", "6767"};
+        for (int i = 0; i < mainFileNames.length; i++) {
+            File file = new File(samplesDir, mainFileNames[i] + ".txt");
+            Files.write(file.toPath(), mainContents[i].getBytes());
+            files.add(file);
+        }
+        File subDir = new File(samplesDir, "Inner");
+        if (!subDir.exists()) {
+            subDir.mkdir();
+        }
+        File insideFile = new File(subDir, "inside.txt");
+        Files.write(insideFile.toPath(), "hihi".getBytes());
+        files.add(insideFile);
         return files;
     }
 
@@ -222,5 +251,16 @@ public class GP211Tester {
     } else {
         System.out.println("modification is not working");
     }
+    }
+
+    public static void testTreeIterativeWL() throws Exception{
+        List<File> sampleFiles = createSampleFilesNested();
+        boolean allPassed = true;
+        for (File file : sampleFiles) {
+            String hash = Git.hashFile(file.getAbsolutePath());
+            Git.createBlobFiles(file.getAbsolutePath());
+            Git.updateIndex(hash, file.getAbsolutePath());
+        }
+        Git.workToTree();
     }
 }
