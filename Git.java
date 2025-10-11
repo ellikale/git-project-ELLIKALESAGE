@@ -243,7 +243,7 @@ public class Git{
         return deepest;
     }
 
-    public static void workToTree() throws Exception{
+    public static String workToTree() throws Exception{
         parseNormalize();
         File workingListFile = new File("git", "workingList");
         if(!workingListFile.exists()){
@@ -278,6 +278,8 @@ public class Git{
                 String name = path.substring(path.lastIndexOf("/") + 1);
                 treeContents = treeContents + type + " " + hash + " " + name + "\n";
             }
+            //maybe fixes last line issue, only changed this for testing! yay it worked.
+            treeContents = treeContents.substring(0, treeContents.length() - 1);
 
             File tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod = File.createTempFile("tree", ".txt");
             Files.write(tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod.toPath(), treeContents.getBytes());
@@ -303,6 +305,33 @@ public class Git{
             Files.write(workingListFile.toPath(), lines);
             sortWL();
         }
+        //just added this for testing, need to add the final thing
+        if(!lines.isEmpty()){
+            String treeContents = "";
+            for (String string : lines) {
+                String[] parts = string.split(" "); 
+                String type = parts[0];
+                String hash = parts[1];
+                String path = parts[2];
+                String name = path.substring(path.lastIndexOf("/") + 1);
+                treeContents = treeContents + type + " " + hash + " " + name + "\n";
+            }
+            treeContents = treeContents.substring(0, treeContents.length() - 1);
+            File tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod = File.createTempFile("tree", ".txt");
+            Files.write(tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod.toPath(), treeContents.getBytes());
+
+
+            String treeHash = hashFile(tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod.getAbsolutePath());
+            tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod.delete();
+
+            File treeFile = new File("git/objects", treeHash);
+            if(!treeFile.exists()){
+                Files.write(treeFile.toPath(), treeContents.getBytes());
+            }
+
+            return treeHash;
+        }
+        return "you failed";
     }
 
     // public static void workToTree(){
