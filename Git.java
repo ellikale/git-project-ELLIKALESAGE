@@ -243,27 +243,28 @@ public class Git{
         return deepest;
     }
 
-    public static void workToTree() throws Exception{
+    public static String workToTree() throws Exception{
         parseNormalize();
         File workingListFile = new File("git", "workingList");
         if(!workingListFile.exists()){
             throw new Exception("brochacho, there is no working list file");
         }
         List<String> lines = Files.readAllLines(workingListFile.toPath());
+        String lastTreeHash = null;
 
         sortWL();
-        while(true){
+        while (true) {
             String leafDir = findLeafMostParentDir(lines);
-            if(leafDir == null){
+            if (leafDir == null) {
                 break;
             }
 
             List<String> children = new ArrayList<>();
             for (String line : lines) {
                 String path = getPathFromWLLine(line);
-                if(path.startsWith(leafDir + "/")){
+                if (path.startsWith(leafDir + "/")) {
                     String relative = path.substring(leafDir.length() + 1);
-                    if(!relative.contains("/")){
+                    if (!relative.contains("/")) {
                         children.add(line);
                     }
                 }
@@ -271,7 +272,7 @@ public class Git{
 
             String treeContents = "";
             for (String string : children) {
-                String[] parts = string.split(" "); 
+                String[] parts = string.split(" ");
                 String type = parts[0];
                 String hash = parts[1];
                 String path = parts[2];
@@ -280,21 +281,24 @@ public class Git{
             }
 
             File tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod = File.createTempFile("tree", ".txt");
-            Files.write(tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod.toPath(), treeContents.getBytes());
-
+            Files.write(tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod.toPath(),
+                    treeContents.getBytes());
 
             String treeHash = hashFile(tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod.getAbsolutePath());
             tempFileForHashingPurposesBcIDONTWantToCreateANewHelperMethod.delete();
 
             File treeFile = new File("git/objects", treeHash);
-            if(!treeFile.exists()){
+            if (!treeFile.exists()) {
                 Files.write(treeFile.toPath(), treeContents.getBytes());
+                // this way each time a tree is created, you remember its hash
+                lastTreeHash = treeHash;
+
             }
 
             List<String> updatedLines = new ArrayList<>();
             for (String line : lines) {
                 String path = getPathFromWLLine(line);
-                if(!path.equals(leafDir) && !path.startsWith(leafDir + "/")){
+                if (!path.equals(leafDir) && !path.startsWith(leafDir + "/")) {
                     updatedLines.add(line);
                 }
             }
@@ -303,6 +307,44 @@ public class Git{
             Files.write(workingListFile.toPath(), lines);
             sortWL();
         }
+        
+        // After collapsing all leaf directories, build final root tree
+        if (!lines.isEmpty()) {
+            StringBuilder treeContents = new StringBuilder();
+            for (String string : lines) {
+                String[] parts = string.split(" ");
+                if (parts.length < 3) {
+                    continue;
+                }
+                String type = parts[0];
+                String hash = parts[1];
+                String path = parts[2];
+                String name = path.substring(path.lastIndexOf("/") + 1);
+                treeContents.append(type).append(" ").append(hash).append(" ").append(name).append("\n");
+            }
+
+            // trim the trailing newline
+            String finalContents = treeContents.toString().stripTrailing();
+
+            // hash the final tree contents
+            File temp = File.createTempFile("tree", ".txt");
+            Files.writeString(temp.toPath(), finalContents);
+            String rootHash = hashFile(temp.getAbsolutePath());
+            temp.delete();
+
+            // write root tree to objects folder
+            File rootFile = new File("git/objects", rootHash);
+            if (!rootFile.exists()) {
+                Files.writeString(rootFile.toPath(), finalContents);
+            }
+
+            lastTreeHash = rootHash;
+        }
+
+        // return the final tree hash
+        return lastTreeHash;
+
+
     }
 
     // public static void workToTree(){
