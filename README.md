@@ -22,3 +22,14 @@ GP-4.1:
 
     Verification:
     I wrote a simple tester (GP41Tester.java) to initialize the respository, create nested folders and sample files, stage all files (generate blobs and udpate the index), and call workToTree() and print the root tree SHA. After running the tester, tree and blob files were successfully created in git/objects/, and the root tree SHA printed correctly.
+
+
+GP-4.3: 
+    bugs discovered and fixed:
+        The workToTree() method originally didn't return the root tree hash or fully build the final tree. I changed its header from void to String and added logic to track and return the final tree SHA
+
+    missing functionality implemented:
+        I implemented a full GitWrapper class so all Git operations can be called through one consistent interface. The method init() initializes the repository. Add() stages files adn creates blob objects. Commit() builds tree and commit objects and updates HEAD. Checkout() restores the workign directory to match a selected commit.
+        I also added a recursive restoreTree() helper method to rebuild files and folders from stored tree adn blob objects for the checkout() feature
+        I created a complete tester GitTester.java that runs the full Git cycle (initializing, adding, commiting twice, checking out the first commit, adn verifying file restoration).
+
