@@ -10,6 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -243,10 +245,10 @@ public class Git{
         return deepest;
     }
 
-    public static String workToTree() throws Exception{
+    public static String workToTree() throws Exception {
         parseNormalize();
         File workingListFile = new File("git", "workingList");
-        if(!workingListFile.exists()){
+        if (!workingListFile.exists()) {
             throw new Exception("brochacho, there is no working list file");
         }
         List<String> lines = Files.readAllLines(workingListFile.toPath());
@@ -307,7 +309,7 @@ public class Git{
             Files.write(workingListFile.toPath(), lines);
             sortWL();
         }
-        
+
         // After collapsing all leaf directories, build final root tree
         if (!lines.isEmpty()) {
             StringBuilder treeContents = new StringBuilder();
@@ -344,8 +346,59 @@ public class Git{
         // return the final tree hash
         return lastTreeHash;
 
-
     }
+    
+
+    public static String createCommit(String author, String message, String rootTreeHash) throws Exception {
+
+        File head = new File("git", "HEAD");
+        String parentHash = new String();
+        // if both r true, a previous commit was already made, and its hash is stored in head
+        if (head.exists() && head.length() > 0) {
+            parentHash = Files.readString(head.toPath()).trim();
+        }
+
+        // creating the commit text
+        StringBuilder commitData = new StringBuilder();
+        commitData.append("tree: ").append(rootTreeHash).append("\n");
+        if (parentHash != null && !parentHash.trim().isEmpty()) {
+    commitData.append("parent: ").append(parentHash).append("\n");
+}
+        commitData.append("author: ").append(author).append("\n");
+
+        // for formatting the date, got help: https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html
+        String date = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy").format(new Date());
+        commitData.append("date: ").append(date).append("\n");
+
+        commitData.append("message: ").append(message).append("\n");
+
+        // Hash and save the commit file
+        String commitText = commitData.toString();
+        String commitHash = hashFile(tempHash(commitText)); 
+        File commitFile = new File("git/objects", commitHash);
+        if (!commitFile.exists()) {
+            Files.writeString(commitFile.toPath(), commitText);
+        }
+
+        // Update HEAD to this commit
+        Files.writeString(head.toPath(), commitHash);
+
+        System.out.println("New commit created: " + commitHash);
+        return commitHash;
+    }
+    
+
+    // temporarily creates a small text file, writes the content into it, and then returns the file’s path so hashFile() can read it and generate a hash.
+    private static String tempHash(String content) throws IOException {
+    File temp = File.createTempFile("commit", ".txt");
+    Files.writeString(temp.toPath(), content);
+    String path = temp.getAbsolutePath();
+    // https://stackoverflow.com/questions/19012557/use-of-deleteonexit-method-in-java
+    temp.deleteOnExit();
+    return path;
+}
+
+
 
     // public static void workToTree(){
     //     parseNormalize();
