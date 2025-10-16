@@ -9,7 +9,8 @@ import java.util.List;
 
 public class GPTester {
     public static void main(String[] args) throws Exception {
-        testTreeIterativeWL();
+        //Git.milestone21();
+        //testTreeIterativeWL();
         //need to commit again for gitkraken to chill
         //createSampleFilesNested();
         //Git.milestone21();
@@ -34,6 +35,17 @@ public class GPTester {
         //createSampleFiles();
         //testingModification();
         //robustReset();
+    }
+
+    public static void initializeTwice(){
+        try {
+            Git.milestone21();
+            createSampleFiles();
+            Git.milestone21();
+        } catch (Exception e) {
+            System.out.println("You go this exception..." + e);
+        }
+        
     }
 
     public static void repoInitializationTester() throws IOException{
