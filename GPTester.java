@@ -9,11 +9,14 @@ import java.util.List;
 
 public class GPTester {
     public static void main(String[] args) throws Exception {
-        //Git.milestone21();
+        Git.makesEntireGitRepo();
+        testTreeIterativeWorkingList();
+        robustReset();
+        //Git.makesEntireGitRepo();
         //testTreeIterativeWL();
         //need to commit again for gitkraken to chill
         //createSampleFilesNested();
-        //Git.milestone21();
+        //Git.makesEntireGitRepo();
         // for (int i = 0; i < 6; i++) {
         //     System.out.println("Test " + i + ": ");
         //     repoInitializationTester();
@@ -39,9 +42,9 @@ public class GPTester {
 
     public static void initializeTwice(){
         try {
-            Git.milestone21();
+            Git.makesEntireGitRepo();
             createSampleFiles();
-            Git.milestone21();
+            Git.makesEntireGitRepo();
         } catch (Exception e) {
             System.out.println("You go this exception..." + e);
         }
@@ -49,7 +52,7 @@ public class GPTester {
     }
 
     public static void repoInitializationTester() throws IOException{
-        Git.milestone21();
+        Git.makesEntireGitRepo();
         boolean ifSuccessful = true;
         File indexFile = new File("git", "index");
         File headFile = new File("git", "HEAD");
@@ -161,7 +164,7 @@ public class GPTester {
     }
 
     public static void blobTester() throws IOException {
-    Git.milestone21();
+    Git.makesEntireGitRepo();
     List<File> sampleFiles = createSampleFiles();
     boolean allPassed = true;
     for (File file : sampleFiles) {
@@ -190,7 +193,7 @@ public class GPTester {
 }
 
     public static void indexingTester() throws IOException{
-        Git.milestone21();
+        Git.makesEntireGitRepo();
         List<File> sampleFiles = createSampleFiles();
         boolean allPassed = true;
         for (File file : sampleFiles) {
@@ -233,6 +236,10 @@ public class GPTester {
             if(indexFile.exists()){
                 Files.write(indexFile.toPath(), new byte[0]);
             }
+            File workingListFile = new File("git", "workingList");
+            if(workingListFile.exists()){
+                Files.write(workingListFile.toPath(), new byte[0]);
+            }
             File samplesDir = new File("samples");
             if(samplesDir.exists()){
                 deleteRecursively(samplesDir);
@@ -265,7 +272,7 @@ public class GPTester {
     }
     }
 
-    public static void testTreeIterativeWL() throws Exception{
+    public static void testTreeIterativeWorkingList() throws Exception{
         List<File> sampleFiles = createSampleFilesNested();
         boolean allPassed = true;
         for (File file : sampleFiles) {
@@ -273,6 +280,6 @@ public class GPTester {
             Git.createBlobFiles(file.getAbsolutePath());
             Git.updateIndex(hash, file.getAbsolutePath());
         }
-        Git.workToTree();
+        System.out.println(Git.workToTree());
     }
 }

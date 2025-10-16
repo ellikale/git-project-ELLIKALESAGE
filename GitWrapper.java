@@ -12,7 +12,7 @@ public class GitWrapper {
      */
     public void init() {
         try{
-            Git.milestone21();
+            Git.makesEntireGitRepo();
             System.out.println("Repo initialized");
         }
         catch (IOException e) {
@@ -69,20 +69,21 @@ public class GitWrapper {
      * @param message The commit message describing the changes.
      * @return The SHA1 hash of the new commit.
      */
-    public String commit(String author, String message) {
-        try {
-            String rootTreeHash = Git.workToTree();
-            if (rootTreeHash == null || rootTreeHash.isEmpty()) {
-                System.out.println("Index is empty. Nothing to commit");
-                return "";
-            }
-            String commitHash = Git.createCommit(author, message, rootTreeHash);
-            return commitHash;
-        } catch (Exception e) {
-            System.out.println("error creating commit");
-            return "";
-        }
-    }
+    //talias
+    // public String commit(String author, String message) {
+    //     try {
+    //         String rootTreeHash = Git.workToTree();
+    //         if (rootTreeHash == null || rootTreeHash.isEmpty()) {
+    //             System.out.println("Index is empty. Nothing to commit");
+    //             return "";
+    //         }
+    //         String commitHash = Git.createCommit(author, message, rootTreeHash);
+    //         return commitHash;
+    //     } catch (Exception e) {
+    //         System.out.println("error creating commit");
+    //         return "";
+    //     }
+    // }
 
      /**
      * EXTRA CREDIT:
@@ -182,8 +183,4 @@ public class GitWrapper {
             }
         }
     }
-
-
-} {
-    
 }

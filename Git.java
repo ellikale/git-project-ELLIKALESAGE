@@ -15,10 +15,10 @@ import java.util.List;
 
 public class Git{
     public static void main(String[] args) throws IOException {
-        milestone21();
+        makesEntireGitRepo();
     }
 
-    public static void milestone21() throws IOException{
+    public static void makesEntireGitRepo() throws IOException{
         createGitDirectory();
         createObjectsDirectory();
         createIndexDirectory();
@@ -112,19 +112,30 @@ public class Git{
         Path filePath = Paths.get(fileName).toAbsolutePath();
         String relativePath = relativeRootDirPath.relativize(filePath).toString(); //used baeldung for relativize
         
-        List<String> lines = Files.readAllLines(indexFile.toPath());
+        List<String> lines = new ArrayList<>();
+        if(indexFile.exists()){
+            lines = Files.readAllLines(indexFile.toPath());
+        }
         String toAdd = hashString + " " + relativePath;
         
         boolean haveYouUpdated = false;
+        boolean alreadyThere = false;
         for (int i = 0; i < lines.size(); i++) {
             String theLine = lines.get(i);
             if(theLine.endsWith(" " + relativePath)){
-                if(!theLine.startsWith(hashString + " ")){
-                    lines.set(i, toAdd);
+                //if(!theLine.startsWith(hashString + " ")){
+                if(theLine.equals(toAdd)){
+                    alreadyThere = true;
                 }
-                haveYouUpdated = true;
+                else{
+                    lines.set(i, toAdd);
+                    haveYouUpdated = true;
+                }
                 break;
             }
+        }
+        if(alreadyThere){
+            return;
         }
         if(!haveYouUpdated){
             lines.add(toAdd);
@@ -195,7 +206,7 @@ public class Git{
         Files.write(workingList.toPath(), workingLines);
     }
 
-    public static void sortWL() throws IOException{
+    public static void sortWorkingList() throws IOException{
         File workingList = new File("git", "workingList");
         List<String> workLines = Files.readAllLines(workingList.toPath());
         boolean didYouSwap = true;
@@ -204,8 +215,8 @@ public class Git{
             for (int i = 0; i < workLines.size() - 1; i++) {
                 String firstLine = workLines.get(i);
                 String secondLine = workLines.get(i + 1);
-                String firstPath = getPathFromWLLine(firstLine);
-                String secoPath = getPathFromWLLine(secondLine);
+                String firstPath = getPathFromWorkingListLine(firstLine);
+                String secoPath = getPathFromWorkingListLine(secondLine);
                 if(firstPath.compareTo(secoPath) > 0){
                     workLines.set(i, secondLine);
                     workLines.set(i + 1, firstLine);
@@ -217,7 +228,7 @@ public class Git{
         Files.write(workingList.toPath(), workLines);
     }
 
-    public static String getPathFromWLLine(String line){
+    public static String getPathFromWorkingListLine(String line){
         if(line.length() > 46){
             return line.substring(46);
         }
@@ -228,7 +239,7 @@ public class Git{
         String deepest = null;
         int maxDepth = -1;
         for (String string : lines) {
-            String path = getPathFromWLLine(string);
+            String path = getPathFromWorkingListLine(string);
             int depth = 0;
             for (int i = 0; i < path.length(); i++) {
                 if(path.charAt(i) == '/'){
@@ -244,14 +255,30 @@ public class Git{
     }
 
     public static String workToTree() throws Exception{
+        File index = new File("git", "index");
+        if(index.length() == 0){
+            // Handle empty index by creating an empty tree object
+            String emptyContent = "";
+            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            byte[] bytes = emptyContent.getBytes();
+            byte[] hashBytes = digest.digest(bytes);
+            String emptyTreeHash = makeItHex(hashBytes);
+            
+            File emptyTreeFile = new File("git/objects", emptyTreeHash);
+            if(!emptyTreeFile.exists()){
+                Files.write(emptyTreeFile.toPath(), emptyContent.getBytes());
+            }
+            return emptyTreeHash;
+        }
         parseNormalize();
         File workingListFile = new File("git", "workingList");
         if(!workingListFile.exists()){
             throw new Exception("brochacho, there is no working list file");
         }
         List<String> lines = Files.readAllLines(workingListFile.toPath());
+        String lastTreeHash = null;
 
-        sortWL();
+        sortWorkingList();
         while(true){
             String leafDir = findLeafMostParentDir(lines);
             if(leafDir == null){
@@ -260,7 +287,7 @@ public class Git{
 
             List<String> children = new ArrayList<>();
             for (String line : lines) {
-                String path = getPathFromWLLine(line);
+                String path = getPathFromWorkingListLine(line);
                 if(path.startsWith(leafDir + "/")){
                     String relative = path.substring(leafDir.length() + 1);
                     if(!relative.contains("/")){
@@ -291,11 +318,12 @@ public class Git{
             File treeFile = new File("git/objects", treeHash);
             if(!treeFile.exists()){
                 Files.write(treeFile.toPath(), treeContents.getBytes());
+                lastTreeHash = treeHash;
             }
 
             List<String> updatedLines = new ArrayList<>();
             for (String line : lines) {
-                String path = getPathFromWLLine(line);
+                String path = getPathFromWorkingListLine(line);
                 if(!path.equals(leafDir) && !path.startsWith(leafDir + "/")){
                     updatedLines.add(line);
                 }
@@ -303,7 +331,7 @@ public class Git{
             updatedLines.add("tree " + treeHash + " " + leafDir);
             lines = updatedLines;
             Files.write(workingListFile.toPath(), lines);
-            sortWL();
+            sortWorkingList();
         }
         //just added this for testing, need to add the final thing
         if(!lines.isEmpty()){
@@ -328,9 +356,11 @@ public class Git{
             if(!treeFile.exists()){
                 Files.write(treeFile.toPath(), treeContents.getBytes());
             }
-
+            String finalContent = "tree " + treeHash + " (root)";
+            Files.write(workingListFile.toPath(), finalContent.getBytes());
             return treeHash;
         }
+        workingListFile.delete();
         return "you failed";
     }
 
